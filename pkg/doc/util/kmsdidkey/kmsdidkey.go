@@ -15,6 +15,7 @@ import (
 	"github.com/btcsuite/btcutil/base58"
 	commonpb "github.com/google/tink/go/proto/common_go_proto"
 
+	"github.com/ethereum/go-ethereum/crypto"
 	cryptoapi "github.com/hyperledger/aries-framework-go/pkg/crypto"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/util/jwkkid"
 	"github.com/hyperledger/aries-framework-go/pkg/kms"
@@ -83,8 +84,10 @@ func BuildDIDKeyByKeyType(pubKeyBytes []byte, keyType kms.KeyType) (string, erro
 
 // EncryptionPubKeyFromDIDKey parses the did:key DID and returns the key's raw value.
 // note: for NIST P ECDSA keys, the raw value does not have the compression point.
+//
 //	In order to use elliptic.Unmarshal() with the raw value, the uncompressed point ([]byte{4}) must be prepended.
 //	see https://github.com/golang/go/blob/master/src/crypto/elliptic/elliptic.go#L384.
+//
 //nolint:funlen,gocyclo
 func EncryptionPubKeyFromDIDKey(didKey string) (*cryptoapi.PublicKey, error) {
 	pubKey, code, err := extractRawKey(didKey)
@@ -157,6 +160,17 @@ func EncryptionPubKeyFromDIDKey(didKey string) (*cryptoapi.PublicKey, error) {
 		kmtKT = kms.ECDSAP521TypeIEEEP1363
 		kt = "EC"
 		crv, x, y, pubKey = unmarshalECKey(elliptic.P521(), pubKey)
+	case fingerprint.Secp256K1PubKeyMultiCodec:
+		ukey, err := crypto.DecompressPubkey(pubKey)
+		if err != nil {
+			return nil, fmt.Errorf("encryptionPubKeyFromDIDKey: %w", err)
+		}
+		kmtKT = kms.ECDSASecp256k1TypeIEEEP1363
+		kt = "EC"
+		crv = "SECP256K1"
+		x = ukey.X.Bytes()
+		y = ukey.Y.Bytes()
+		pubKey = elliptic.Marshal(ukey.Curve, ukey.X, ukey.Y)
 	default:
 		return nil, fmt.Errorf("encryptionPubKeyFromDIDKey: unsupported key multicodec code [0x%x]", code)
 	}
