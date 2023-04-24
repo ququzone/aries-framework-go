@@ -15,6 +15,7 @@ import (
 	"fmt"
 
 	"github.com/btcsuite/btcutil/base58"
+	"github.com/ethereum/go-ethereum/crypto"
 
 	"github.com/hyperledger/aries-framework-go/pkg/doc/jose/jwk"
 	didfingerprint "github.com/hyperledger/aries-framework-go/pkg/vdr/fingerprint/didfp"
@@ -36,6 +37,8 @@ const (
 	P384PubKeyMultiCodec = 0x1201
 	// P521PubKeyMultiCodec for NIST P-521 public key in multicodec table.
 	P521PubKeyMultiCodec = 0x1202
+	// Secp256K1PubKeyMultiCodec for Secp256k1 public key in multicodec table.
+	Secp256K1PubKeyMultiCodec = 0xe7
 
 	// Default BLS 12-381 public key length in G2 field.
 	bls12381G2PublicKeyLen = 96
@@ -71,6 +74,17 @@ func CreateDIDKeyByJwk(jsonWebKey *jwk.JWK) (string, string, error) {
 	case "EC":
 		code, curve, err := ecCodeAndCurve(jsonWebKey.Crv)
 		if err != nil {
+			if jsonWebKey.Crv == "secp256k1" {
+				switch key := jsonWebKey.Key.(type) {
+				case *ecdsa.PublicKey:
+					bytes := crypto.CompressPubkey(key)
+					didKey, keyID := CreateDIDKeyByCode(Secp256K1PubKeyMultiCodec, bytes)
+
+					return didKey, keyID, nil
+				default:
+					return "", "", fmt.Errorf("unexpected EC key type %T", key)
+				}
+			}
 			return "", "", err
 		}
 
@@ -187,6 +201,7 @@ func PubKeyFromFingerprint(fingerprint string) ([]byte, uint64, error) {
 
 // PubKeyFromDIDKey parses the did:key DID and returns the key's raw value.
 // note: for NIST P ECDSA keys, the raw value does not have the compression point.
+//
 //	In order to use elliptic.Unmarshal() with the raw value, the uncompressed point ([]byte{4}) must be prepended.
 //	see https://github.com/golang/go/blob/master/src/crypto/elliptic/elliptic.go#L384.
 func PubKeyFromDIDKey(didKey string) ([]byte, error) {
