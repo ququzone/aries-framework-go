@@ -713,6 +713,7 @@ func (je *JWEEncrypt) ecEPKAndAlg(cek []byte) (*cryptoapi.PrivateKey, string, er
 	if err != nil {
 		if strings.ToLower(je.recipientsKeys[0].Curve) == "secp256k1" {
 			curve = crypto.S256()
+			curve.Params().Name = "secp256k1"
 		} else {
 			return nil, "", fmt.Errorf("ecEPKAndAlg: getCurve: %w", err)
 		}
