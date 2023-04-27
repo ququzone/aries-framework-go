@@ -20,7 +20,6 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/go-jose/go-jose/v3"
 	hybrid "github.com/google/tink/go/hybrid/subtle"
 	"github.com/google/tink/go/keyset"
@@ -712,8 +711,7 @@ func (je *JWEEncrypt) ecEPKAndAlg(cek []byte) (*cryptoapi.PrivateKey, string, er
 	curve, err := hybrid.GetCurve(je.recipientsKeys[0].Curve)
 	if err != nil {
 		if strings.ToLower(je.recipientsKeys[0].Curve) == "secp256k1" {
-			curve = crypto.S256()
-			curve.Params().Name = "secp256k1"
+			curve = S256()
 		} else {
 			return nil, "", fmt.Errorf("ecEPKAndAlg: getCurve: %w", err)
 		}
@@ -832,7 +830,7 @@ func convertRecEPKToMarshalledJWK(recEPK *cryptoapi.PublicKey) ([]byte, error) {
 		c, err = hybrid.GetCurve(recEPK.Curve)
 		if err != nil {
 			if strings.ToLower(recEPK.Curve) == "secp256k1" {
-				c = crypto.S256()
+				c = S256()
 			} else {
 				return nil, err
 			}
