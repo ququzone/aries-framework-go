@@ -42,8 +42,9 @@ const (
 	// ECDH1PUXC20PKWAlg is the ECDH-1PU with XChacha20Poly1305 key wrapping algorithm.
 	ECDH1PUXC20PKWAlg = "ECDH-1PU+XC20PKW"
 
-	nistPECDHKWPrivateKeyTypeURL  = "type.hyperledger.org/hyperledger.aries.crypto.tink.NistPEcdhKwPrivateKey"
-	x25519ECDHKWPrivateKeyTypeURL = "type.hyperledger.org/hyperledger.aries.crypto.tink.X25519EcdhKwPrivateKey"
+	nistPECDHKWPrivateKeyTypeURL     = "type.hyperledger.org/hyperledger.aries.crypto.tink.NistPEcdhKwPrivateKey"
+	x25519ECDHKWPrivateKeyTypeURL    = "type.hyperledger.org/hyperledger.aries.crypto.tink.X25519EcdhKwPrivateKey"
+	secp256k1ECDHKWPrivateKeyTypeURL = "type.googleapis.com/google.crypto.tink.secp256k1PrivateKey"
 )
 
 var errBadKeyHandleFormat = errors.New("bad key handle format")

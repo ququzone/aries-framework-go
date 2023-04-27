@@ -21,6 +21,7 @@ import (
 	tinkpb "github.com/google/tink/go/proto/tink_go_proto"
 
 	ecdhpb "github.com/hyperledger/aries-framework-go/component/kmscrypto/crypto/tinkcrypto/primitive/proto/ecdh_aead_go_proto"
+	"github.com/hyperledger/aries-framework-go/pkg/doc/jose"
 )
 
 func extractPrivKey(kh *keyset.Handle) (interface{}, error) {
@@ -76,6 +77,15 @@ func extractPrivKey(kh *keyset.Handle) (interface{}, error) {
 		}
 
 		return pbKey.KeyValue, nil
+	case secp256k1ECDHKWPrivateKeyTypeURL:
+		pbKey := new(ecdhpb.EcdhAeadPrivateKey)
+
+		err = proto.Unmarshal(primaryKey.KeyData.Value, pbKey)
+		if err != nil {
+			return nil, errors.New("extractPrivKey: invalid key in keyset")
+		}
+
+		return hybrid.GetECPrivateKey(jose.S256(), pbKey.KeyValue), nil
 	}
 
 	return nil, fmt.Errorf("extractPrivKey: can't extract unsupported private key '%s'", primaryKey.KeyData.TypeUrl)
